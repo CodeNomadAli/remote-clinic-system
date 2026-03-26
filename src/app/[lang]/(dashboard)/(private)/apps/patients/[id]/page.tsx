@@ -20,7 +20,7 @@ export default function PatientPage() {
     async function fetchPatient() {
       try { 
   //const prisma = await getPrismaClient(); // ✅ ADD THIS
-        const res = await fetch(`/api/patients/${id}`)
+        const res = await fetch(`i/patients/${id}`)
         if (!res.ok) throw new Error("Patient not found")
         const data = await res.json()
         setPatient(data.data)
