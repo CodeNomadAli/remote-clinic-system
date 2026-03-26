@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import type { ZodSchema } from "zod";
 
 // ============================================
@@ -45,7 +46,9 @@ export async function validateRequest<T>(
 
     if (!result.success) {
       const errors = result.error.errors.map((e) => e.message).join(", ");
-      return { error: errorResponse(errors, 400) };
+
+      
+return { error: errorResponse(errors, 400) };
     }
 
     return { data: result.data };
@@ -60,12 +63,16 @@ export async function validateRequest<T>(
 
 export function getQueryParams(request: Request) {
   const { searchParams } = new URL(request.url);
-  return Object.fromEntries(searchParams.entries());
+
+  
+return Object.fromEntries(searchParams.entries());
 }
 
 export function getPaginationParams(request: Request) {
   const params = getQueryParams(request);
-  return {
+
+  
+return {
     page: Math.max(1, parseInt(params.page || "1")),
     limit: Math.min(100, Math.max(1, parseInt(params.limit || "10"))),
     sortBy: params.sortBy || "createdAt",
@@ -82,28 +89,36 @@ export function generatePatientNumber(): string {
   const prefix = "PAT";
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${timestamp}${random}`;
+
+  
+return `${prefix}-${timestamp}${random}`;
 }
 
 export function generateAppointmentNumber(): string {
   const prefix = "APT";
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${date}-${random}`;
+
+  
+return `${prefix}-${date}-${random}`;
 }
 
 export function generateInvoiceNumber(): string {
   const prefix = "INV";
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${date}-${random}`;
+
+  
+return `${prefix}-${date}-${random}`;
 }
 
 export function generateLabTestNumber(): string {
   const prefix = "LAB";
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${date}-${random}`;
+
+  
+return `${prefix}-${date}-${random}`;
 }
 
 // ============================================
@@ -112,39 +127,51 @@ export function generateLabTestNumber(): string {
 
 export function formatDate(date: Date | string): string {
   const d = new Date(date);
-  return d.toISOString().split("T")[0];
+
+  
+return d.toISOString().split("T")[0];
 }
 
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
-  return d.toISOString().slice(0, 19).replace("T", " ");
+
+  
+return d.toISOString().slice(0, 19).replace("T", " ");
 }
 
 export function getStartOfDay(date: Date = new Date()): Date {
   const d = new Date(date);
+
   d.setHours(0, 0, 0, 0);
-  return d;
+  
+return d;
 }
 
 export function getEndOfDay(date: Date = new Date()): Date {
   const d = new Date(date);
+
   d.setHours(23, 59, 59, 999);
-  return d;
+  
+return d;
 }
 
 export function getStartOfWeek(date: Date = new Date()): Date {
   const d = new Date(date);
   const day = d.getDay();
+
   d.setDate(d.getDate() - day);
   d.setHours(0, 0, 0, 0);
-  return d;
+  
+return d;
 }
 
 export function getStartOfMonth(date: Date = new Date()): Date {
   const d = new Date(date);
+
   d.setDate(1);
   d.setHours(0, 0, 0, 0);
-  return d;
+  
+return d;
 }
 
 // ============================================

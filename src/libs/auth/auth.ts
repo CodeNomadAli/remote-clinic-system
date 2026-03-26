@@ -1,11 +1,9 @@
 import { cookies } from "next/headers";
 
 import { SignJWT, jwtVerify } from "jose";
-
 import bcrypt from "bcryptjs";
 
-import prisma from '@/db'
-
+import prisma from '@/db';
 
 import type { JWTPayload, SafeUser } from "@/libs/db/types";
 
@@ -17,17 +15,14 @@ const JWT_EXPIRY = "7d";
 const SALT_ROUNDS = 12;
 
 // ============================================
-// PASSWORD UTILITIES (using bcrypt)
+// PASSWORD UTILITIES
 // ============================================
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-export async function verifyPassword(
-  password: string,
-  hashedPassword: string
-): Promise<boolean> {
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
 }
 
@@ -59,17 +54,12 @@ return payload as unknown as JWTPayload;
 // ============================================
 
 export async function createSession(userId: string): Promise<string> {
-  // if (!isDatabaseConfigured()) {
-  //   throw new Error("Database not configured");
-  // }
-
-  // const prisma = await getPrismaClient();
   const token = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await prisma.session.create({
     data: {
-      token,
+      sessionToken: token,   // ← fixed
       userId,
       expiresAt,
     },
@@ -79,20 +69,20 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export async function validateSession(token: string) {
-  
-
-  // const prisma = await getPrismaClient();
-
   const session = await prisma.session.findUnique({
-    where: { token },
+    where: { sessionToken: token },
     include: {
       user: {
         include: {
-          role: {
+          roles: {
             include: {
-              permissions: {
+              role: {                    // ← fixed: UserRole has "role" relation
                 include: {
-                  permission: true,
+                  permissions: {
+                    include: {
+                      permission: true,
+                    },
+                  },
                 },
               },
             },
@@ -115,10 +105,9 @@ return null;
 }
 
 export async function deleteSession(token: string): Promise<void> {
-    
-  // const prisma = await getPrismaClient();
-
-  await prisma.session.deleteMany({ where: { token } });
+  await prisma.session.deleteMany({ 
+    where: { sessionToken: token }   // ← fixed
+  });
 }
 
 // ============================================
@@ -142,18 +131,18 @@ return safeUser;
 }
 
 export async function getUserPermissions(userId: string): Promise<string[]> {
-  
-
-  
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      role: {
+      roles: {
         include: {
-          permissions: {
+          role: {                    // ← fixed
             include: {
-              permission: true,
+              permissions: {
+                include: {
+                  permission: true,
+                },
+              },
             },
           },
         },
@@ -163,8 +152,10 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
 
   if (!user) return [];
 
-  return user.role.permissions.map(
-    (rp) => `${rp.permission.module}:${rp.permission.action}`
+  return user.roles.flatMap(ur =>
+    ur.role.permissions.map(rp => 
+      `${rp.permission.module}:${rp.permission.action}`  // Note: adjust if your Permission model doesn't have module/action
+    )
   );
 }
 
@@ -173,34 +164,26 @@ export function hasPermission(
   module: string,
   action: string
 ): boolean {
-  const requiredPermission = `${module}:${action}`;
+  const required = `${module}:${action}`;
 
   
 return (
-    userPermissions.includes(requiredPermission) ||
+    userPermissions.includes(required) ||
     userPermissions.includes(`${module}:*`) ||
     userPermissions.includes("*:*")
   );
 }
 
-// ============================================
-// AUTH MIDDLEWARE HELPER
-// ============================================
-
-export async function requireAuth(
-  requiredPermissions?: { module: string; action: string }[]
-) {
+export async function requireAuth(requiredPermissions?: { module: string; action: string }[]) {
   const user = await getCurrentUser();
 
-  if (!user) {
-    return { error: "Unauthorized", status: 401 };
-  }
+  if (!user) return { error: "Unauthorized", status: 401 };
 
-  if (requiredPermissions && requiredPermissions.length > 0) {
+  if (requiredPermissions?.length) {
     const permissions = await getUserPermissions(user.id);
-    
-    for (const required of requiredPermissions) {
-      if (!hasPermission(permissions, required.module, required.action)) {
+
+    for (const req of requiredPermissions) {
+      if (!hasPermission(permissions, req.module, req.action)) {
         return { error: "Forbidden", status: 403 };
       }
     }
@@ -224,11 +207,7 @@ export async function logActivity(
   ipAddress?: string,
   userAgent?: string
 ) {
-  // if (!isDatabaseConfigured()) return;
-
   try {
-    // const prisma = await getPrismaClient();
-
     await prisma.activityLog.create({
       data: {
         userId,

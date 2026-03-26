@@ -6,11 +6,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 
 import { format } from "date-fns";
 
-import { Button, Badge, Box } from "@mui/material";
+import { Button, Badge, Box, Dialog, DialogContent, IconButton } from "@mui/material";
+
+import { X } from "lucide-react";
 
 import { PageHeader } from "@/components/dashboard/page-header";
-import { Dialog, DialogContent, IconButton } from "@mui/material";
-import { X } from "lucide-react";
 
 import DynamicTable from "@/components/DynamicTable";
 import { PatientForm } from "@/components/forms/patient-form";
@@ -128,55 +128,60 @@ export default function PatientsPage() {
       hideLoading();
     }
   };
-const columns = useMemo(() => [
-  {
-    accessorKey: "name",
-    header: "Patient",
-    cell: ({ row }: any) => {
-      const patient = row.original; // ✅ get the actual data
-      return (
-        <div>
-          <p className="font-medium">{patient.firstName} {patient.lastName}</p>
-          <p className="text-sm text-muted-foreground">
-            {patient.dateOfBirth ? format(new Date(patient.dateOfBirth), "MMM d, yyyy") : "N/A"} - {patient.gender || "N/A"}
-          </p>
-        </div>
-      )
+
+  const columns = useMemo(() => [
+    {
+      accessorKey: "name",
+      header: "Patient",
+      cell: ({ row }: any) => {
+        const patient = row.original; // ✅ get the actual data
+
+
+        return (
+          <div>
+            <p className="font-medium">{patient.firstName} {patient.lastName}</p>
+            <p className="text-sm text-muted-foreground">
+              {patient.dateOfBirth ? format(new Date(patient.dateOfBirth), "MMM d, yyyy") : "N/A"} - {patient.gender || "N/A"}
+            </p>
+          </div>
+        )
+      },
     },
-  },
-  {
-    accessorKey: "contact",
-    header: "Contact",
-    cell: ({ row }: any) => {
-      const patient = row.original;
-      return (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm">{patient.phone || "N/A"}</div>
-          {patient.email && <div className="text-sm text-muted-foreground">{patient.email}</div>}
-        </div>
-      )
+    {
+      accessorKey: "contact",
+      header: "Contact",
+      cell: ({ row }: any) => {
+        const patient = row.original;
+
+
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm">{patient.phone || "N/A"}</div>
+            {patient.email && <div className="text-sm text-muted-foreground">{patient.email}</div>}
+          </div>
+        )
+      },
     },
-  },
-  {
-    accessorKey: "bloodGroup",
-    header: "Blood Group",
-    cell: ({ row }: any) => <Badge variant="outlined">{row.original.bloodGroup || "N/A"}</Badge>,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }: any) => (
-      <Badge variant={row.original.isActive ? "default" : "secondary"}>
-        {row.original.isActive ? "Active" : "Inactive"}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "registered",
-    header: "Registered",
-    cell: ({ row }: any) => row.original.createdAt ? format(new Date(row.original.createdAt), "MMM d, yyyy") : "N/A",
-  },
-], []);
+    {
+      accessorKey: "bloodGroup",
+      header: "Blood Group",
+      cell: ({ row }: any) => <Badge variant="outlined">{row.original.bloodGroup || "N/A"}</Badge>,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }: any) => (
+        <Badge variant={row.original.isActive ? "default" : "secondary"}>
+          {row.original.isActive ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "registered",
+      header: "Registered",
+      cell: ({ row }: any) => row.original.createdAt ? format(new Date(row.original.createdAt), "MMM d, yyyy") : "N/A",
+    },
+  ], []);
 
   return (
     <div className="space-y-6">
@@ -186,7 +191,7 @@ const columns = useMemo(() => [
 
       <DynamicTable
         resource="users"
-      permissionKey="user"
+        permissionKey="user"
         data={data?.data && data.data.length > 0 ? data.data : dummyPatients}
         columns={columns}
         pagination={{
