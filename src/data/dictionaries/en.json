@@ -112,6 +112,8 @@
     "Gallery":"Gallery",
     "AI":"AI",
     "Patients":"Patients",
-    "Notifications":"Notifications"
+    "Notifications":"Notifications",
+    "Appointments":"Appointments",
+    "Doctors":"Doctors"
   }
 }
