@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useCallback, useContext, useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import type { ColumnDef } from '@tanstack/react-table'
@@ -46,6 +47,7 @@ const DynamicTable = <T extends { id: string }>({
     if (val === null || val === undefined) return ''
     if (Array.isArray(val)) return val.map(valueToString).join(' ')
     if (typeof val === 'object') return Object.values(val).map(valueToString).join(' ')
+
     return val.toString()
   }
 
@@ -53,17 +55,21 @@ const DynamicTable = <T extends { id: string }>({
   const filteredData = useMemo(() => {
     if (!search) return data
     const lowerSearch = search.toLowerCase()
+
+
     return data.filter(row => valueToString(row).toLowerCase().includes(lowerSearch))
   }, [search, data])
 
   const handleView = useCallback((id: string) => router.push(`/${resource}/show/${id}`), [router, resource])
   const handleEdit = useCallback((id: string) => router.push(`/${resource}/form/${id}`), [router, resource])
+
   const handleDelete = useCallback(async (id: string) => {
     if (window.confirm(`Are you sure you want to delete this ${permissionKey}?`)) {
       try {
         showLoading()
         const res = await fetch(`/api/${resource}/${id}`, { method: 'DELETE' })
         const req = await res.json()
+
         if (res.ok) {
           showSuccess(req.message || `${permissionKey} deleted successfully`)
           router.refresh()
@@ -88,11 +94,13 @@ const DynamicTable = <T extends { id: string }>({
 
       const handleShare = (platform: 'whatsapp' | 'facebook') => {
         const url = encodeURIComponent(window.location.href) // current page URL
+
         if (platform === 'whatsapp') {
           window.open(`https://api.whatsapp.com/send?text=${url}`, '_blank')
         } else if (platform === 'facebook') {
           window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank')
         }
+
         handleMenuClose()
       }
 
