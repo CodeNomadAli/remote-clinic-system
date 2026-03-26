@@ -524,3 +524,4 @@ model Prescription {
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
