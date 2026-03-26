@@ -103,6 +103,7 @@ export default function PatientsPage() {
       header: "Blood Group",
       cell: (row: any) => <Badge variant="outlined">{row.bloodGroup || "N/A"}</Badge>,
     },
+    
     {
       accessorKey: "status",
       header: "Status",
