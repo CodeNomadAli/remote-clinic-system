@@ -1,148 +1,193 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState, useMemo } from "react";
 
-import { Plus, Eye, Edit, Trash2, Phone, Mail, Stethoscope } from "lucide-react"
+import { Plus, Phone, Mail } from "lucide-react";
 
-import { PageHeader } from "@/components/dashboard/page-header"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
-import { DoctorForm } from "@/components/forms/doctor-form"
+import { PageHeader } from "@/components/dashboard/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { DoctorForm } from "@/components/forms/doctor-form";
 
-import DynamicTable from "@/components/DynamicTable" // adjust path if needed
+import DynamicTable from "@/components/DynamicTable";
 
 interface Doctor {
-  id: string
-  name: string
-  email: string
-  phone: string
-  specialization: string
-  licenseNumber: string
-  status: string
-  consultationFee: number
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string;
+  specialization: string;
+  licenseNumber: string;
+  isActive: boolean;
+  consultationFee: number;
 }
 
+// 1️⃣ Dummy doctors data
+const dummyDoctors: Doctor[] = [
+  {
+    id: "1",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john.doe@example.com",
+    phone: "0301-2345678",
+    specialization: "Cardiologist",
+    licenseNumber: "LIC12345",
+    isActive: true,
+    consultationFee: 50,
+  },
+  {
+    id: "2",
+    firstName: "Jane",
+    lastName: "Smith",
+    email: "jane.smith@example.com",
+    phone: "0302-9876543",
+    specialization: "Dermatologist",
+    licenseNumber: "LIC67890",
+    isActive: false,
+    consultationFee: 60,
+  },
+  {
+    id: "3",
+    firstName: "Michael",
+    lastName: "Johnson",
+    email: "michael.johnson@example.com",
+    phone: "0303-5555555",
+    specialization: "Neurologist",
+    licenseNumber: "LIC11223",
+    isActive: true,
+    consultationFee: 70,
+  },
+  {
+    id: "4",
+    firstName: "Emily",
+    lastName: "Davis",
+    email: "emily.davis@example.com",
+    phone: "0304-1112222",
+    specialization: "Pediatrician",
+    licenseNumber: "LIC44556",
+    isActive: true,
+    consultationFee: 55,
+  },
+  {
+    id: "5",
+    firstName: "William",
+    lastName: "Johnson",
+    email: "william.johnson@example.com",
+    phone: "0305-3334445",
+    specialization: "Orthopedic",
+    licenseNumber: "LIC77889",
+    isActive: false,
+    consultationFee: 65,
+  },
+];
+
 export default function DoctorsPage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editDoctor, setEditDoctor] = useState<Doctor | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDoctor, setEditDoctor] = useState<Doctor | null>(null);
 
-  const dummyDoctors: Doctor[] = [
+  // 2️⃣ Table columns
+  const columns = useMemo(() => [
     {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "123-456-7890",
-      specialization: "Cardiologist",
-      licenseNumber: "LIC12345",
-      status: "active",
-      consultationFee: 50,
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      phone: "987-654-3210",
-      specialization: "Dermatologist",
-      licenseNumber: "LIC67890",
-      status: "inactive",
-      consultationFee: 60,
-    },
-  ]
-
-  const columns = [
-    {
-      header: "Doctor",
       accessorKey: "name",
-      cell: (doctor: Doctor) => (
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback>{doctor.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-medium">Dr. {doctor.name}</p>
-            <p className="text-sm text-muted-foreground">{doctor.specialization}</p>
+      header: "Doctor",
+      cell: ({ row }: any) => {
+        const doctor: Doctor = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarFallback>
+                {doctor.firstName[0].toUpperCase()}{doctor.lastName[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">Dr. {doctor.firstName} {doctor.lastName}</p>
+              <p className="text-sm text-muted-foreground">{doctor.specialization}</p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
+      accessorKey: "contact",
       header: "Contact",
-      accessorKey: "email",
-      cell: (doctor: Doctor) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="h-3 w-3 text-muted-foreground" />
-            {doctor.phone}
+      cell: ({ row }: any) => {
+        const doctor: Doctor = row.original;
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="h-3 w-3 text-muted-foreground" /> {doctor.phone}
+            </div>
+            {doctor.email && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail className="h-3 w-3" /> {doctor.email}
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Mail className="h-3 w-3" />
-            {doctor.email}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
-      header: "License",
       accessorKey: "licenseNumber",
-      cell: (doctor: Doctor) => <span className="font-mono text-sm">{doctor.licenseNumber}</span>,
+      header: "License",
+      cell: ({ row }: any) => row.original.licenseNumber,
     },
     {
-      header: "Fee",
       accessorKey: "consultationFee",
-      cell: (doctor: Doctor) => <span className="font-medium">${doctor.consultationFee}</span>,
+      header: "Fee",
+      cell: ({ row }: any) => `$${row.original.consultationFee}`,
     },
     {
-      header: "Status",
       accessorKey: "status",
-      cell: (doctor: Doctor) => (
-        <Badge variant={doctor.status === "active" ? "default" : "secondary"}>{doctor.status}</Badge>
+      header: "Status",
+      cell: ({ row }: any) => (
+        <Badge variant={row.original.isActive ? "default" : "secondary"}>
+          {row.original.isActive ? "Active" : "Inactive"}
+        </Badge>
       ),
     },
-  ]
+  ], []);
 
-  
   return (
     <div className="space-y-6">
       <PageHeader title="Doctors" description="Manage doctors and their schedules">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Doctor
+              <Plus className="mr-2 h-4 w-4" /> Add Doctor
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Doctor</DialogTitle>
+              <DialogTitle>{editDoctor ? "Edit Doctor" : "Add New Doctor"}</DialogTitle>
               <DialogDescription>Enter the doctor information below</DialogDescription>
             </DialogHeader>
             <DoctorForm
+              doctor={editDoctor || undefined}
               onSuccess={() => {
-                setDialogOpen(false)
-
-                // refresh data later
+                setDialogOpen(false);
+                setEditDoctor(null);
+                // refresh data if using API
               }}
             />
           </DialogContent>
         </Dialog>
       </PageHeader>
 
-     
-
       <DynamicTable
-      resource="users"
-      permissionKey="user"
-      data={dummyDoctors}
-      columns={columns}
-       pagination={{
+        resource="users"
+        permissionKey="user"
+        data={dummyDoctors}
+        columns={columns}
+        pagination={{
           totalRecords: dummyDoctors.length,
           totalPages: 1,
           page: 1,
           pageSize: 10,
         }}
-    />
+      />
     </div>
-  )
+  );
 }

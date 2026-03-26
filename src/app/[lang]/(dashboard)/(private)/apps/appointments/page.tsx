@@ -1,20 +1,16 @@
 "use client"
 
 import { useState } from "react"
-
 import { useSearchParams } from "next/navigation"
-
 import Link from "next/link"
-
 import { Plus, MoreHorizontal, Eye, Edit, Trash2, CheckCircle, XCircle, Clock } from "lucide-react"
-
 import { format } from "date-fns"
-
 import { PageHeader } from "@/components/dashboard/page-header"
 import { DataTable } from "@/components/dashboard/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+
 import {
   Dialog,
   DialogContent,
@@ -36,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,25 +43,44 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useAppointments, deleteAppointment, updateAppointment } from "@/libs/hooks/use-api"
-import { useAuth } from "@/libs/contexts/auth-context"
 import { AppointmentForm } from "@/components/forms/appointment-form"
 
-
-
-import { Input } from "@/components/ui/input"
-
-interface Appointment {
-  id: string
-  patient?: { id: string; name: string }
-  doctor?: { id: string; name: string; specialization: string }
-  dateTime: string
-  duration: number
-  type: string
-  status: string
-  notes: string | null
-  createdAt: string
-}
+// Dummy data
+const dummyAppointments = [
+  {
+    id: "1",
+    patient: { id: "p1", name: "Ali Khan" },
+    doctor: { id: "d1", name: "Sara Ahmed", specialization: "Dermatology" },
+    dateTime: new Date().toISOString(),
+    duration: 30,
+    type: "Consultation",
+    status: "scheduled",
+    notes: null,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    patient: { id: "p2", name: "Fatima Noor" },
+    doctor: { id: "d2", name: "Omar Farooq", specialization: "Cardiology" },
+    dateTime: new Date().toISOString(),
+    duration: 45,
+    type: "Follow-up",
+    status: "completed",
+    notes: null,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    patient: { id: "p3", name: "Ahmed Raza" },
+    doctor: { id: "d3", name: "Hina Malik", specialization: "Neurology" },
+    dateTime: new Date().toISOString(),
+    duration: 60,
+    type: "Consultation",
+    status: "cancelled",
+    notes: null,
+    createdAt: new Date().toISOString(),
+  },
+]
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   scheduled: "default",
@@ -80,40 +96,34 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [dateFilter, setDateFilter] = useState<string>("")
   const [dialogOpen, setDialogOpen] = useState(searchParams.get("action") === "new")
-  const [editAppointment, setEditAppointment] = useState<Appointment | null>(null)
+  const [editAppointment, setEditAppointment] = useState(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  // const { hasPermission } = useAuth()
 
-  const { data, isLoading, mutate } = useAppointments({
-    status: statusFilter || undefined,
-    date: dateFilter || undefined,
-    page,
-  })
+  // 🔹 Track if dropdown is open for blur effect
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
-  const handleDelete = async () => {
-    if (!deleteId) return
-    const result = await deleteAppointment(deleteId)
+  // Use dummy data
+  const data = {
+    data: dummyAppointments,
+    totalPages: 1,
+    stats: { total: 3, scheduled: 1, completed: 1, cancelled: 1 },
+  }
+  const isLoading = false
 
-    if (result.success) {
-      mutate()
-    }
-
-    setDeleteId(null)
+  const handleStatusChange = (id: string, status: string) => {
+    console.log("Change status", id, status)
   }
 
-  const handleStatusChange = async (id: string, status: string) => {
-    const result = await updateAppointment(id, { status })
-
-    if (result.success) {
-      mutate()
-    }
+  const handleDelete = () => {
+    console.log("Delete appointment", deleteId)
+    setDeleteId(null)
   }
 
   const columns = [
     {
       key: "patient",
       header: "Patient",
-      cell: (apt: Appointment) => (
+      cell: (apt) => (
         <div>
           <p className="font-medium">{apt.patient?.name || "Unknown"}</p>
           <p className="text-sm text-muted-foreground">{apt.type}</p>
@@ -123,7 +133,7 @@ export default function AppointmentsPage() {
     {
       key: "doctor",
       header: "Doctor",
-      cell: (apt: Appointment) => (
+      cell: (apt) => (
         <div>
           <p className="font-medium">Dr. {apt.doctor?.name || "Unknown"}</p>
           <p className="text-sm text-muted-foreground">{apt.doctor?.specialization}</p>
@@ -133,7 +143,7 @@ export default function AppointmentsPage() {
     {
       key: "dateTime",
       header: "Date & Time",
-      cell: (apt: Appointment) => (
+      cell: (apt) => (
         <div>
           <p className="font-medium">{format(new Date(apt.dateTime), "MMM d, yyyy")}</p>
           <p className="text-sm text-muted-foreground">
@@ -145,17 +155,13 @@ export default function AppointmentsPage() {
     {
       key: "status",
       header: "Status",
-      cell: (apt: Appointment) => (
-        <Badge variant={statusColors[apt.status] || "secondary"}>
-          {apt.status.replace("_", " ")}
-        </Badge>
-      ),
+      cell: (apt) => <Badge variant={statusColors[apt.status] || "secondary"}>{apt.status.replace("_", " ")}</Badge>,
     },
     {
       key: "actions",
       header: "",
       className: "w-[50px]",
-      cell: (apt: Appointment) => (
+      cell: (apt) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -170,189 +176,134 @@ export default function AppointmentsPage() {
                 View Details
               </Link>
             </DropdownMenuItem>
-            {/* {hasPermission("appointments:update") && apt.status === "scheduled" && ( */}
-            <>
-              <DropdownMenuItem onClick={() => handleStatusChange(apt.id, "completed")}>
-                <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                Mark Completed
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange(apt.id, "in_progress")}>
-                <Clock className="mr-2 h-4 w-4 text-blue-600" />
-                Start Appointment
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange(apt.id, "no_show")}>
-                <XCircle className="mr-2 h-4 w-4 text-orange-600" />
-                Mark No Show
-              </DropdownMenuItem>
-            </>
-            {/* )} */}
-            {/* {hasPermission("appointments:update") && ( */}
+            <DropdownMenuItem onClick={() => handleStatusChange(apt.id, "completed")}>
+              <CheckCircle className="mr-2 h-4 w-4 text-green-600" /> Mark Completed
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(apt.id, "in_progress")}>
+              <Clock className="mr-2 h-4 w-4 text-blue-600" /> Start Appointment
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(apt.id, "no_show")}>
+              <XCircle className="mr-2 h-4 w-4 text-orange-600" /> Mark No Show
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setEditAppointment(apt)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
+              <Edit className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
-            {/* )} */}
-            {/* {hasPermission("appointments:delete") && apt.status === "scheduled" && ( */}
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => setDeleteId(apt.id)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Cancel
+            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteId(apt.id)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Cancel
             </DropdownMenuItem>
-            {/* )} */}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
     },
   ]
 
-  const stats = data?.stats || { total: 0, scheduled: 0, completed: 0, cancelled: 0 }
-
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Appointments"
-        description="Schedule and manage patient appointments"
-      >
-        {/* {hasPermission("appointments:create") && ( */}
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Appointment
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Schedule Appointment</DialogTitle>
-                <DialogDescription>
-                  Create a new appointment for a patient
-                </DialogDescription>
-              </DialogHeader>
-              <AppointmentForm
-                onSuccess={() => {
-                  setDialogOpen(false)
-                  mutate()
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-        {/* )} */}
+      <PageHeader title="Appointments" description="Schedule and manage patient appointments">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> New Appointment
+            </Button>
+          </DialogTrigger>
+
+          {dialogOpen && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />}
+
+          <DialogContent className="fixed left-1/2 top-[350px] z-50 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl -translate-x-1/2 -translate-y-1/2">
+            <DialogHeader>
+              <DialogTitle>Schedule Appointment</DialogTitle>
+              <DialogDescription>Create a new appointment for a patient</DialogDescription>
+            </DialogHeader>
+            <AppointmentForm onSuccess={() => setDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </PageHeader>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Total</p>
-            <p className="text-2xl font-bold">{stats.total}</p>
+            <p className="text-2xl font-bold">{data.stats.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Scheduled</p>
-            <p className="text-2xl font-bold text-blue-600">{stats.scheduled}</p>
+            <p className="text-2xl font-bold text-blue-600">{data.stats.scheduled}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Completed</p>
-            <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+            <p className="text-2xl font-bold text-green-600">{data.stats.completed}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Cancelled</p>
-            <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+            <p className="text-2xl font-bold text-red-600">{data.stats.cancelled}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="scheduled">Scheduled</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="no_show">No Show</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="date"
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
-          className="w-[180px]"
-        />
-        {(statusFilter || dateFilter) && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setStatusFilter("")
-              setDateFilter("")
-            }}
-          >
-            Clear Filters
-          </Button>
-        )}
+      {/* Filters with dropdown blur */}
+      <div className="relative">
+        {isDropdownOpen && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30"></div>}
+
+        <div className="flex flex-wrap gap-4 relative z-40">
+         <Select
+  value={statusFilter}
+  onValueChange={setStatusFilter}
+>
+  <SelectTrigger className="w-[180px] text-white">
+    <SelectValue placeholder="All Status" className="text-white" />
+  </SelectTrigger>
+
+  {/* SelectContent with background blur */}
+  <SelectContent className="relative text-white">
+    {/* Blur background behind items */}
+    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-md z-0" />
+    
+    {/* Actual items */}
+    <div className="relative z-10">
+      <SelectItem value="all" className="text-white">All Status</SelectItem>
+      <SelectItem value="scheduled" className="text-white">Scheduled</SelectItem>
+      <SelectItem value="in_progress" className="text-white">In Progress</SelectItem>
+      <SelectItem value="completed" className="text-white">Completed</SelectItem>
+      <SelectItem value="cancelled" className="text-white">Cancelled</SelectItem>
+      <SelectItem value="no_show" className="text-white">No Show</SelectItem>
+    </div>
+  </SelectContent>
+</Select>
+
+          <Input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-[180px] text-white"
+          />
+
+          {(statusFilter || dateFilter) && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setStatusFilter("")
+                setDateFilter("")
+              }}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </div>
       </div>
 
       <DataTable
         columns={columns}
-        data={data?.data || []}
+        data={data.data}
         isLoading={isLoading}
-        pagination={{
-          page,
-          totalPages: data?.totalPages || 1,
-          onPageChange: setPage,
-        }}
+        pagination={{ page, totalPages: data.totalPages, onPageChange: setPage }}
         emptyMessage="No appointments found"
       />
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editAppointment} onOpenChange={(open) => !open && setEditAppointment(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Appointment</DialogTitle>
-            <DialogDescription>
-              Update the appointment details
-            </DialogDescription>
-          </DialogHeader>
-          {editAppointment && (
-            <AppointmentForm
-              appointment={editAppointment}
-              onSuccess={() => {
-                setEditAppointment(null)
-                mutate()
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Appointment</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this appointment? The patient will be notified.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Cancel Appointment
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
