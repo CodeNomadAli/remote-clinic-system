@@ -5,12 +5,12 @@ const verticalMenuData = (dictionary: Awaited<ReturnType<typeof getDictionary>>)
   // This is how you will normally render submenu
   {
     label: dictionary['navigation'].dashboards,
-    
+
     href: '/apps/ecommerce/dashboard',
     permission: 'view:dashboard',
     icon: 'tabler-smart-home'
   },
-  
+
 
   // {
   //   label: dictionary['navigation'].chat,
@@ -48,31 +48,56 @@ const verticalMenuData = (dictionary: Awaited<ReturnType<typeof getDictionary>>)
     label: dictionary['navigation'].appsPages,
     isSection: true,
     children: [
+
+      {
+        label: dictionary['navigation'].AI,
+
+        href: '/apps/ai-assistant',
+        permission: 'view:dashboard',
+        icon: 'tabler-brain'
+      },
       
-          {
-    label: dictionary['navigation'].AI,
-    
-    href: '/apps/ai-assistant',
-    permission: 'view:dashboard',
-    icon: 'tabler-smart-home'
-  },
-  {
-    label: dictionary['navigation'].Patients,
-    
-    href: '/apps/patients',
-    permission: 'view:dashboard',
-    icon: 'tabler-smart-home'
-  },
-  {
-    label: dictionary['navigation'].Notifications,
-    
-    href: '/apps/notifications',
-    permission: 'view:dashboard',
-    icon: 'tabler-smart-home'
-  },
- 
-      
-      
+      {
+        label: dictionary['navigation'].Patients,
+
+        href: '/apps/patients',
+        permission: 'view:dashboard',
+        icon: 'tabler-medical-cross'
+      },
+      {
+        label: dictionary['navigation'].Doctors,
+
+        href: '/apps/doctors',
+        permission: 'view:dashboard',
+        icon: 'tabler-calendar-event'
+      },
+      {
+        label: dictionary['navigation'].Appointments,
+
+        href: '/apps/appointments',
+        permission: 'view:dashboard',
+        icon: 'tabler-calendar-event'
+      },
+      {
+        label: dictionary['navigation'].Notifications,
+
+        href: '/apps/notifications',
+        permission: 'view:dashboard',
+        icon: 'tabler-bell'
+      },
+      {
+        label: dictionary['navigation'].invoice,
+        icon: 'tabler-calendar',
+        href: '/apps/invoice/list'
+      },
+      {
+        label: dictionary['navigation'].calendar,
+        icon: 'tabler-calendar',
+        href: '/apps/calendar'
+      },
+
+
+
       {
         label: dictionary['navigation'].user,
         icon: 'tabler-user',
@@ -91,7 +116,7 @@ const verticalMenuData = (dictionary: Awaited<ReturnType<typeof getDictionary>>)
           },
         ]
       },
-   
+
       {
         label: dictionary['navigation'].products,
         icon: 'tabler-building-warehouse',
