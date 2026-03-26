@@ -111,6 +111,8 @@
     "editor": "Editor",
     "Gallery": "Gallery",
     "AI": "AI",
-    "Notifications":"Notifications"
+    "Notifications":"Notifications",
+    "Appointments":"Appointments",
+    "Doctors":"Doctors"
   }
 }
